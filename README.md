@@ -161,84 +161,165 @@ flowchart TD
 
 ## Sample Output
 
-Running `python src/main.py` with the default `pop / happy` profile produces:
+`python src/main.py` runs six profiles — three standard and three adversarial.
+
+---
+
+### Profile 1 — High-Energy Pop
 
 ```
-Loaded songs: 20
 ============================================================
-  USER PROFILE
+  PROFILE : High-Energy Pop
 ============================================================
-  Genre        : pop
-  Mood         : happy
-  Energy       : 0.8
-  Valence      : 0.8
-  Acousticness : 0.2
-  Mode         : Major
+  Genre        : pop        Mood  : happy
+  Energy       : 0.88       Mode  : Major
 ============================================================
+  #1  Sunrise City  --  Neon Echo         Score: 10.69 / 11.00
+       Mood match 'happy': +3.0 | Genre match 'pop': +2.0 | Mode match (major): +0.5
+       Energy (0.82 vs 0.88): +1.88 | Valence (0.84 vs 0.82): +1.47
+       Acousticness (0.18 vs 0.08): +0.90 | Loudness (0.72 vs 0.85): +0.43
 
-  TOP 5 RECOMMENDATIONS
-============================================================
-  #1  Sunrise City  -  Neon Echo
-       Genre: pop  |  Mood: happy  |  Score: 10.87 / 11.00
-------------------------------------------------------------
-       Mood match 'happy': +3.0
-       Genre match 'pop': +2.0
-       Mode match (major): +0.5
-       Energy (0.82 vs 0.8): +1.96
-       Valence (0.84 vs 0.8): +1.44
-       Acousticness (0.18 vs 0.2): +0.98
-       Instrumentalness (0.02 vs 0.02): +0.50
-       Loudness (0.72 vs 0.7): +0.49
+  #2  Rooftop Lights  --  Indigo Parade   Score: 8.39 / 11.00
+       Mood match 'happy': +3.0 | Genre mismatch ('indie pop' vs 'pop'): +0.0
+       Energy (0.76 vs 0.88): +1.76 | Valence (0.81 vs 0.82): +1.49
 
-  #2  Rooftop Lights  -  Indigo Parade
-       Genre: indie pop  |  Mood: happy  |  Score: 8.74 / 11.00
-------------------------------------------------------------
-       Mood match 'happy': +3.0
-       Genre mismatch ('indie pop' vs 'pop'): +0.0
-       Mode match (major): +0.5
-       Energy (0.76 vs 0.8): +1.92
-       Valence (0.81 vs 0.8): +1.48
-       Acousticness (0.35 vs 0.2): +0.85
-       Instrumentalness (0.02 vs 0.02): +0.50
-       Loudness (0.68 vs 0.7): +0.49
-
-  #3  Gym Hero  -  Max Pulse
-       Genre: pop  |  Mood: intense  |  Score: 7.45 / 11.00
-------------------------------------------------------------
-       Mood mismatch ('intense' vs 'happy'): +0.0
-       Genre match 'pop': +2.0
-       Mode match (major): +0.5
-       Energy (0.93 vs 0.8): +1.74
-       Valence (0.77 vs 0.8): +1.46
-       Acousticness (0.05 vs 0.2): +0.85
-       Instrumentalness (0.01 vs 0.02): +0.49
-       Loudness (0.88 vs 0.7): +0.41
-
-  #4  Velvet Hours  -  Sienna Cole
-       Genre: r&b  |  Mood: romantic  |  Score: 5.05 / 11.00
-------------------------------------------------------------
-       Mood mismatch ('romantic' vs 'happy'): +0.0
-       Genre mismatch ('r&b' vs 'pop'): +0.0
-       Mode match (major): +0.5
-       Energy (0.55 vs 0.8): +1.50
-       Valence (0.74 vs 0.8): +1.41
-       Acousticness (0.45 vs 0.2): +0.75
-       Instrumentalness (0.03 vs 0.02): +0.49
-       Loudness (0.5 vs 0.7): +0.40
-
-  #5  Concrete Canvas  -  Urban Relay
-       Genre: hip-hop  |  Mood: confident  |  Score: 5.04 / 11.00
-------------------------------------------------------------
-       Mood mismatch ('confident' vs 'happy'): +0.0
-       Genre mismatch ('hip-hop' vs 'pop'): +0.0
-       Energy (0.78 vs 0.8): +1.96
-       Valence (0.62 vs 0.8): +1.23
-       Acousticness (0.08 vs 0.2): +0.88
-       Instrumentalness (0.05 vs 0.02): +0.48
-       Loudness (0.74 vs 0.7): +0.48
-
-============================================================
+  #3  Gym Hero  --  Max Pulse             Score: 7.78 / 11.00
+       Mood mismatch ('intense' vs 'happy'): +0.0 | Genre match 'pop': +2.0
+       Energy (0.93 vs 0.88): +1.90 | Acousticness (0.05 vs 0.08): +0.97
 ```
+
+---
+
+### Profile 2 — Chill Lofi
+
+```
+============================================================
+  PROFILE : Chill Lofi
+============================================================
+  Genre        : lofi       Mood  : chill
+  Energy       : 0.38       Mode  : Minor
+============================================================
+  #1  Midnight Coding  --  LoRoom         Score: 10.75 / 11.00
+       Mood match 'chill': +3.0 | Genre match 'lofi': +2.0 | Mode match (minor): +0.5
+       Energy (0.42 vs 0.38): +1.92 | Acousticness (0.71 vs 0.8): +0.91
+
+  #2  Library Rain  --  Paper Lanterns    Score: 10.32 / 11.00
+       Mood match 'chill': +3.0 | Genre match 'lofi': +2.0
+       Energy (0.35 vs 0.38): +1.94 | Acousticness (0.86 vs 0.8): +0.94
+
+  #3  Spacewalk Thoughts  --  Orbit Bloom Score: 7.92 / 11.00
+       Mood match 'chill': +3.0 | Genre mismatch ('ambient' vs 'lofi'): +0.0
+       Energy (0.28 vs 0.38): +1.80 | Acousticness (0.92 vs 0.8): +0.88
+```
+
+---
+
+### Profile 3 — Deep Intense Rock
+
+```
+============================================================
+  PROFILE : Deep Intense Rock
+============================================================
+  Genre        : rock       Mood  : intense
+  Energy       : 0.91       Mode  : Minor
+============================================================
+  #1  Storm Runner  --  Voltline          Score: 11.00 / 11.00  ← PERFECT SCORE
+       Mood match 'intense': +3.0 | Genre match 'rock': +2.0 | Mode match (minor): +0.5
+       Energy (0.91 vs 0.91): +2.00 | Valence (0.48 vs 0.48): +1.50
+       Acousticness (0.10 vs 0.10): +1.00 | Loudness (0.85 vs 0.85): +0.50
+
+  #2  Gym Hero  --  Max Pulse             Score: 7.95 / 11.00
+       Mood match 'intense': +3.0 | Genre mismatch ('pop' vs 'rock'): +0.0
+       Energy (0.93 vs 0.91): +1.96
+
+  #3  Iron Collapse  --  Fracture Line    Score: 5.33 / 11.00
+       Mood mismatch ('angry' vs 'intense'): +0.0 | Genre mismatch: +0.0
+       Mode match (minor): +0.5 | Energy (0.97 vs 0.91): +1.88
+```
+
+---
+
+### Profile 4 — ADVERSARIAL: High Energy + Sad Mood
+
+> **Conflict:** `target_energy=0.92` pulls toward loud intense tracks; `favorite_mood=sad` and `target_valence=0.25` pull toward slow, melancholic ones.
+
+```
+============================================================
+  PROFILE : ADVERSARIAL - High Energy + Sad Mood
+============================================================
+  Genre        : blues      Mood  : sad
+  Energy       : 0.92       Valence: 0.25   Mode: Minor
+============================================================
+  #1  Empty Glass Blues  --  Ray Holloway  Score: 9.56 / 11.00
+       Mood match 'sad': +3.0 | Genre match 'blues': +2.0 | Mode match (minor): +0.5
+       Energy (0.38 vs 0.92): +0.92  ← energy penalised for being too slow
+       Valence (0.28 vs 0.25): +1.46 | Acousticness (0.75 vs 0.7): +0.95
+
+  #2  Iron Collapse  --  Fracture Line    Score: 5.05 / 11.00
+       Mood mismatch ('angry' vs 'sad'): +0.0 | Genre mismatch: +0.0
+       Energy (0.97 vs 0.92): +1.90  ← wins on energy, loses on mood+genre
+
+  #3  Storm Runner  --  Voltline          Score: 4.98 / 11.00
+       Mood mismatch ('intense' vs 'sad'): +0.0
+       Energy (0.91 vs 0.92): +1.98
+```
+
+**Finding:** Mood wins. The sad blues song ranks #1 despite its low energy (0.38 vs target 0.92) because the +3.0 mood match and +2.0 genre match outweigh the energy penalty. The system cannot find a "high-energy sad" song because none exists in the catalog.
+
+---
+
+### Profile 5 — ADVERSARIAL: Genre Not in Catalog (k-pop)
+
+> **Edge case:** No song has `genre = "k-pop"`. Genre match is always +0.0 for every song.
+
+```
+============================================================
+  PROFILE : ADVERSARIAL - Genre Not in Catalog (k-pop)
+============================================================
+  Genre        : k-pop      Mood  : happy
+  Energy       : 0.80       Mode  : Major
+============================================================
+  #1  Sunrise City  --  Neon Echo         Score: 8.91 / 11.00
+       Mood match 'happy': +3.0 | Genre mismatch ('pop' vs 'k-pop'): +0.0
+       Energy (0.82 vs 0.8): +1.96 | Valence (0.84 vs 0.85): +1.48
+
+  #2  Rooftop Lights  --  Indigo Parade   Score: 8.64 / 11.00
+       Mood match 'happy': +3.0 | Genre mismatch: +0.0
+
+  #3  Gym Hero  --  Max Pulse             Score: 5.43 / 11.00
+       Mood mismatch: +0.0 | Genre mismatch: +0.0
+       Mode match (major): +0.5 | Energy (0.93 vs 0.8): +1.74
+```
+
+**Finding:** The system degrades gracefully — mood + numeric features still produce a sensible ranking. The gap between #2 (8.64) and #3 (5.43) shows the mood-match cliff still functioning even with zero genre points available.
+
+---
+
+### Profile 6 — ADVERSARIAL: Perfectly Neutral (all 0.5)
+
+> **Edge case:** Every numeric target is 0.5 — the midpoint. Tests whether scores cluster so tightly the ranking becomes meaningless.
+
+```
+============================================================
+  PROFILE : ADVERSARIAL - Perfectly Neutral (all 0.5)
+============================================================
+  Genre        : ambient    Mood  : relaxed
+  Energy       : 0.5        Mode  : Major
+============================================================
+  #1  Coffee Shop Stories  --  Slow Stereo  Score: 7.93 / 11.00
+       Mood match 'relaxed': +3.0 | Genre mismatch ('jazz' vs 'ambient'): +0.0
+       Mode match (major): +0.5 | Energy (0.37 vs 0.5): +1.74
+
+  #2  Spacewalk Thoughts  --  Orbit Bloom   Score: 6.57 / 11.00
+       Mood mismatch: +0.0 | Genre match 'ambient': +2.0
+       Mode match (major): +0.5 | Energy (0.28 vs 0.5): +1.56
+
+  #3  Velvet Hours  --  Sienna Cole         Score: 5.25 / 11.00
+  #4  Gravel Road Home  --  Dusty Creek     Score: 5.17 / 11.00
+  #5  Focus Flow  --  LoRoom                Score: 5.16 / 11.00
+```
+
+**Finding:** Scores at ranks 3–5 cluster within 0.09 of each other (5.25 / 5.17 / 5.16) — the ranking at that level is nearly arbitrary. The system still produces a clear top-2 (mood match + genre match), but the neutral profile confirms that the more "average" your preferences, the less decisive the recommendations become.
 
 ---
 
