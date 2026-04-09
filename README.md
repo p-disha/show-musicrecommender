@@ -11,23 +11,234 @@ Your goal is to:
 - Evaluate what your system gets right and wrong
 - Reflect on how this mirrors real world AI recommenders
 
-Replace this paragraph with your own summary of what your version does.
+This simulation builds a content-based music recommender that scores songs from a small catalog against a user taste profile. It reads song attributes from `data/songs.csv`, computes a weighted similarity score for each song, and returns the top matches ranked by how closely they match the user's preferred mood, energy level, genre, emotional tone, and acoustic texture.
 
 ---
 
 ## How The System Works
 
-Explain your design in plain language.
+Real-world recommenders like Spotify and YouTube combine two approaches: collaborative filtering (finding patterns across millions of users' listening behavior — skips, replays, playlist adds) and content-based filtering (matching songs by their audio attributes like tempo, energy, and mood). This simulation focuses on the content-based side. Rather than asking "what do similar users like?", it asks "how closely does each song's measurable qualities match what this user has told us they enjoy?" Each song is scored using a point-based formula — numerical features like energy and valence earn proximity points (closer to the user's target = more points), and categorical features like genre and mood earn fixed points on an exact match. The system awards the most points to **mood** and **energy** as the strongest signals of listening intent, uses **genre** as a taste identity bonus, and refines results with **valence**, **acousticness**, **instrumentalness**, and **loudness**.
 
-Some prompts to answer:
+### `Song` Features
 
-- What features does each `Song` use in your system
-  - For example: genre, mood, energy, tempo
-- What information does your `UserProfile` store
-- How does your `Recommender` compute a score for each song
-- How do you choose which songs to recommend
+Each song in `data/songs.csv` stores 15 attributes:
 
-You can include a simple diagram or bullet list if helpful.
+| Feature | Type | Role in scoring |
+|---|---|---|
+| `id` | Integer | Unique identifier — not scored |
+| `title` | String | Display only |
+| `artist` | String | Display only |
+| `genre` | Categorical | Exact match → **+2.0 pts** |
+| `mood` | Categorical | Exact match → **+3.0 pts** |
+| `energy` | Float 0–1 | Proximity → **max +2.0 pts** |
+| `tempo_bpm` | Float | Tiebreaker only — not scored directly |
+| `valence` | Float 0–1 | Proximity → **max +1.5 pts** |
+| `danceability` | Float 0–1 | Collected — not scored (correlated with energy) |
+| `acousticness` | Float 0–1 | Proximity → **max +1.0 pts** |
+| `instrumentalness` | Float 0–1 | Proximity → **max +0.5 pts** |
+| `speechiness` | Float 0–1 | Collected — not scored directly |
+| `liveness` | Float 0–1 | Collected — not scored directly |
+| `loudness_norm` | Float 0–1 | Proximity → **max +0.5 pts** |
+| `mode` | Integer 0/1 | Exact match → **+0.5 pts** |
+
+### `UserProfile` Features
+
+The user profile stores the listener's stated preferences:
+
+| Field | Type | Matched against |
+|---|---|---|
+| `favorite_genre` | String | `song.genre` — binary match |
+| `favorite_mood` | String | `song.mood` — binary match |
+| `target_energy` | Float 0–1 | `song.energy` — proximity |
+| `target_valence` | Float 0–1 | `song.valence` — proximity |
+| `target_acousticness` | Float 0–1 | `song.acousticness` — proximity |
+| `target_instrumentalness` | Float 0–1 | `song.instrumentalness` — proximity |
+| `target_loudness_norm` | Float 0–1 | `song.loudness_norm` — proximity |
+| `preferred_mode` | Integer 0/1 | `song.mode` — binary match |
+
+### Algorithm Recipe
+
+Every song is passed through `score_song()` which applies the following rules in order:
+
+**Step 1 — Categorical points (fixed, awarded on exact match):**
+
+```
+Mood match   → +3.0 pts   (strongest signal — wrong mood = wrong vibe entirely)
+Genre match  → +2.0 pts   (taste identity — but softened so cross-genre is still possible)
+Mode match   → +0.5 pts   (minor vs. major alignment — emotional texture tiebreaker)
+```
+
+**Step 2 — Proximity points (scaled by closeness to user's target):**
+
+```
+For any numerical feature with max points P:
+  points = P × (1 − |song_value − target_value|)
+
+  Energy        → max +2.0 pts   (widest spread in catalog: 0.22 – 0.97)
+  Valence       → max +1.5 pts   (emotional brightness — refines within a mood)
+  Acousticness  → max +1.0 pts   (texture: organic/warm vs. electronic/cold)
+  Instrumentalness → max +0.5 pts (vocal vs. instrumental feel)
+  Loudness      → max +0.5 pts   (separates rock from metal at similar energy)
+```
+
+**Step 3 — Total score:**
+
+```
+Maximum possible score = 3.0 + 2.0 + 0.5 + 2.0 + 1.5 + 1.0 + 0.5 + 0.5 = 11.0 pts
+```
+
+**Step 4 — Ranking:**
+
+`recommend_songs()` sorts all scored songs descending by total score. Ties are broken by `tempo_bpm` proximity if a `target_bpm` is set in the profile. The top-k results are returned as `(song, score, explanation)` tuples.
+
+### Known Biases and Limitations
+
+- **Genre single-string lock.** A user whose profile says `"lofi"` scores zero genre points on `folk`, `ambient`, and `classical` even when those songs are nearly identical in energy, acousticness, and instrumentalness. A great-fitting song can be buried because its label doesn't match one word.
+- **Mood mismatch is a hard cliff.** Mood is worth 3.0 points — the largest single award. A song with the wrong mood label loses 27% of the maximum score instantly, even if every numeric feature is a near-perfect match. A "focused" song will always score below a "chill" song for a chill-seeking user, regardless of how similar they actually sound.
+- **Mode is underweighted for emotional nuance.** At only +0.5 pts, whether a song is in a minor or major key barely moves the needle. In practice, mode is one of the strongest predictors of whether a song feels uplifting or melancholic — it likely deserves more influence.
+- **Uncollected features are invisible.** `danceability`, `speechiness`, and `liveness` are stored in the CSV but not scored. A hip-hop fan and a jazz fan with identical energy and valence targets will score identically on those dimensions, even though speechiness (high in rap, low in jazz) would strongly separate them.
+- **Cold catalog.** With 20 songs, top-k results for niche moods may return weak matches simply because no better option exists. Scores should be interpreted as relative rankings within the catalog, not absolute quality measures.
+
+### Data Flow Diagram
+
+```mermaid
+flowchart TD
+    UP["User Profile
+    favorite_genre, favorite_mood
+    target_energy, target_valence
+    target_acousticness, preferred_mode
+    target_instrumentalness, target_loudness_norm"]
+
+    CSV["data/songs.csv
+    20 songs · 15 features each"]
+
+    LOAD["load_songs()
+    Parse CSV rows into list of dicts"]
+
+    UP --> SCORE
+    CSV --> LOAD
+    LOAD --> LOOP
+
+    LOOP{"For each song in catalog
+    (repeat × 20)"}
+
+    LOOP --> SCORE["score_song(user_prefs, song)"]
+
+    SCORE --> CAT["Categorical Points
+    Mood match ......... +3.0
+    Genre match ........ +2.0
+    Mode match ......... +0.5"]
+
+    SCORE --> NUM["Proximity Points
+    Energy ............. max +2.0
+    Valence ............ max +1.5
+    Acousticness ....... max +1.0
+    Instrumentalness ... max +0.5
+    Loudness ........... max +0.5"]
+
+    CAT --> SUM["Sum all points
+    score range: 0.0 – 11.0"]
+    NUM --> SUM
+
+    SUM --> PAIR["Append to results list
+    (song_dict, score, reasons)"]
+
+    PAIR -->|next song| LOOP
+
+    LOOP -->|all 20 songs scored| RANK["recommend_songs()
+    Sort results descending by score
+    Tiebreak: tempo_bpm proximity"]
+
+    RANK --> TOPK["Slice top-k results"]
+
+    TOPK --> OUT["Return ranked list
+    Rank 1 · highest score
+    Rank 2 · ...
+    Rank k · lowest of top-k"]
+```
+
+---
+
+## Sample Output
+
+Running `python src/main.py` with the default `pop / happy` profile produces:
+
+```
+Loaded songs: 20
+============================================================
+  USER PROFILE
+============================================================
+  Genre        : pop
+  Mood         : happy
+  Energy       : 0.8
+  Valence      : 0.8
+  Acousticness : 0.2
+  Mode         : Major
+============================================================
+
+  TOP 5 RECOMMENDATIONS
+============================================================
+  #1  Sunrise City  -  Neon Echo
+       Genre: pop  |  Mood: happy  |  Score: 10.87 / 11.00
+------------------------------------------------------------
+       Mood match 'happy': +3.0
+       Genre match 'pop': +2.0
+       Mode match (major): +0.5
+       Energy (0.82 vs 0.8): +1.96
+       Valence (0.84 vs 0.8): +1.44
+       Acousticness (0.18 vs 0.2): +0.98
+       Instrumentalness (0.02 vs 0.02): +0.50
+       Loudness (0.72 vs 0.7): +0.49
+
+  #2  Rooftop Lights  -  Indigo Parade
+       Genre: indie pop  |  Mood: happy  |  Score: 8.74 / 11.00
+------------------------------------------------------------
+       Mood match 'happy': +3.0
+       Genre mismatch ('indie pop' vs 'pop'): +0.0
+       Mode match (major): +0.5
+       Energy (0.76 vs 0.8): +1.92
+       Valence (0.81 vs 0.8): +1.48
+       Acousticness (0.35 vs 0.2): +0.85
+       Instrumentalness (0.02 vs 0.02): +0.50
+       Loudness (0.68 vs 0.7): +0.49
+
+  #3  Gym Hero  -  Max Pulse
+       Genre: pop  |  Mood: intense  |  Score: 7.45 / 11.00
+------------------------------------------------------------
+       Mood mismatch ('intense' vs 'happy'): +0.0
+       Genre match 'pop': +2.0
+       Mode match (major): +0.5
+       Energy (0.93 vs 0.8): +1.74
+       Valence (0.77 vs 0.8): +1.46
+       Acousticness (0.05 vs 0.2): +0.85
+       Instrumentalness (0.01 vs 0.02): +0.49
+       Loudness (0.88 vs 0.7): +0.41
+
+  #4  Velvet Hours  -  Sienna Cole
+       Genre: r&b  |  Mood: romantic  |  Score: 5.05 / 11.00
+------------------------------------------------------------
+       Mood mismatch ('romantic' vs 'happy'): +0.0
+       Genre mismatch ('r&b' vs 'pop'): +0.0
+       Mode match (major): +0.5
+       Energy (0.55 vs 0.8): +1.50
+       Valence (0.74 vs 0.8): +1.41
+       Acousticness (0.45 vs 0.2): +0.75
+       Instrumentalness (0.03 vs 0.02): +0.49
+       Loudness (0.5 vs 0.7): +0.40
+
+  #5  Concrete Canvas  -  Urban Relay
+       Genre: hip-hop  |  Mood: confident  |  Score: 5.04 / 11.00
+------------------------------------------------------------
+       Mood mismatch ('confident' vs 'happy'): +0.0
+       Genre mismatch ('hip-hop' vs 'pop'): +0.0
+       Energy (0.78 vs 0.8): +1.96
+       Valence (0.62 vs 0.8): +1.23
+       Acousticness (0.08 vs 0.2): +0.88
+       Instrumentalness (0.05 vs 0.02): +0.48
+       Loudness (0.74 vs 0.7): +0.48
+
+============================================================
+```
 
 ---
 
