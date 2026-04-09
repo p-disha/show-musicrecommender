@@ -360,11 +360,32 @@ You can add more tests in `tests/test_recommender.py`.
 
 ## Experiments You Tried
 
-Use this section to document the experiments you ran. For example:
+### Experiment: Energy ×2, Genre ÷2 (weights: energy max +4.0, genre +1.0, new max 12.0)
 
-- What happened when you changed the weight on genre from 2.0 to 0.5
-- What happened when you added tempo or valence to the score
-- How did your system behave for different types of users
+**Hypothesis:** The genre single-string lock was burying musically similar songs (e.g., metal scoring zero for a rock fan). Doubling energy and halving genre should surface audio-similar songs from adjacent genres.
+
+**Changes applied to `score_song()`:**
+
+| Feature | Original | Experimental |
+|---|---|---|
+| Genre match | +2.0 | +1.0 |
+| Energy proximity | max +2.0 | max +4.0 |
+| Max total score | 11.0 | 12.0 |
+
+**Ranking changes across six profiles:**
+
+| Profile | Key change | Better or just different? |
+|---|---|---|
+| High-Energy Pop | Top-3 unchanged; Storm Runner entered #5 (was Concrete Canvas) | Neutral — both are wrong-genre songs |
+| Chill Lofi | No rank changes at all | No effect |
+| **Deep Intense Rock** | **Iron Collapse rose from #4 → #3** (metal above hip-hop) | **Better** — metal is genuinely closer to rock than hip-hop |
+| High Energy + Sad | Empty Glass Blues still #1; Storm Runner/Iron Collapse swapped #2/#3 | Marginal improvement in #2/#3 order |
+| Ghost Genre (k-pop) | Concrete Canvas and Sunday Shore swapped at #4/#5 | Neutral |
+| All Neutral | Spacewalk Thoughts fell from #2 → #4; mid-energy songs rose | Better — neutral listener should get mid-energy, not energy=0.28 |
+
+**Verdict: Mostly different, partially better — reverted.**
+
+The experiment produced two genuine improvements (Iron Collapse rising for rock fans; neutral profile giving less extreme energy songs) but did not fix the core issue: the adversarial "High Energy + Sad" profile still returns a slow blues song at #1 because mood (3.0 pts) + genre (1.0 even after halving) still outweigh the doubled energy penalty. The fundamental bias is categorical label dominance, not energy under-weighting. The real fix is partial genre credit for related genres (e.g., metal earns +1.0 against a rock preference), not a point shift.
 
 ---
 
